@@ -1,8 +1,6 @@
 import numpy as np
-
-picture_dimension = 28
-hidden_layer_size = 300
-no_labels = 10
+from constants import *
+import mnist_loader
 
 
 def sigmoid(vector):
@@ -31,29 +29,47 @@ def log_loss(true_output, net_output):
     :param net_output: Network outputs
     :return:
     """
-    return -1 / net_output.shape[1] * np.sum(true_output * np.log(net_output))
+    return -1 / net_output.shape[0] * np.sum(true_output * np.log(net_output))
 
 
-# initalize all matrices
+def main():
+    hidden_layer_size = 100
+    no_examples_train = 2000
 
-input_vector = np.ones([1, picture_dimension ** 2])
+    # Load data
+    images, labels = mnist_loader.load(TRAIN_INPUT, TRAIN_OUTPUT,
+                                       no_examples_train)
 
-real_outputs = np.zeros([1, no_labels])
-# Real outputs are one-hot encoded
-# [0,0,0,1,0,0,0,0]
-real_outputs[0][2] = 1
+    # Matrix between input and hidden layer
+    # initalize weights with standard distribution
+    input_hidden_weights = np.random.randn(IMAGE_SIZE ** 2,
+                                           hidden_layer_size)
+    hidden_output_weights = np.random.randn(hidden_layer_size, CLASSES)
 
-# Matrix between input and hidden layer
-# initalize weights with standard distribution
-input_hidden_weights = np.random.randn(picture_dimension ** 2,
-                                       hidden_layer_size)
+    correct_predictions = 0
+    step = 0
+    # Start training
+    for image, label in zip(images, labels):
+        # Reshape inputs so they fit the net architecture
+        image = np.transpose(image)
 
-hidden_output_weights = np.random.randn(hidden_layer_size, no_labels)
+        # Feedforward
+        hidden_layer = sigmoid(np.dot(image, input_hidden_weights))
+        output_layer = softmax(np.dot(hidden_layer, hidden_output_weights))
 
-# Feedforward
-hidden_layer = sigmoid(np.dot(input_vector, input_hidden_weights))
-output_layer = softmax(np.dot(hidden_layer, hidden_output_weights))
+        loss = log_loss(true_output=label, net_output=output_layer)
 
-loss = log_loss(true_output=real_outputs, net_output=output_layer)
+        # Measure correct predicitons
+        if np.argmax(output_layer) == np.argmax(label):
+            correct_predictions += 1
 
-print('Logarithmic loss is: {:.5f}'.format(loss))
+        # Print loss
+        if step % 500 == 0:
+            print('Logarithmic loss is: {:.5f}'.format(loss))
+        step += 1
+
+    print("\nAccuracy: {:.3f}".format(correct_predictions / no_examples_train))
+
+
+if __name__ == "__main__":
+    main()
