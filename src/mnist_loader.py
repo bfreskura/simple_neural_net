@@ -6,8 +6,8 @@ def load(imgf, labelf, n):
     """
     :param imgf: Images train
     :param labelf: Labels train
-    :param n:
-    :return:
+    :param n: Number of examples to load
+    :return: Image inputs
     """
     f = open(imgf, "rb")
     l = open(labelf, "rb")

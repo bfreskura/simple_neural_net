@@ -75,36 +75,30 @@ def forward_pass(input, input_hidden_weight, bias_input, hidden_output_weight,
     # Feedforward
     hidden_layer = np.dot(input, input_hidden_weight) + bias_input
     hidden_activations = sigmoid(hidden_layer)
-    return softmax(
-        np.dot(hidden_activations,
-               hidden_output_weight) + bias_hidden), hidden_activations
+    return softmax(np.dot(hidden_activations,
+                          hidden_output_weight) + bias_hidden), hidden_activations
 
 
 def main():
-    hidden_layer_size = 200
-    no_examples_train = 60000
-    no_examples_test = 10000
 
     # Load training data
     images, labels = mnist_loader.load(TRAIN_INPUT, TRAIN_OUTPUT,
-                                       no_examples_train)
-    images = images.T
+                                       NO_EXAMPLES_TRAIN)
     images_eval, labels_eval = mnist_loader.load(EVAL_INPUT, EVAL_OUTPUT,
-                                                 no_examples_test)
-    images_eval = images_eval.T
+                                                 NO_EXAMPLES_TEST)
 
     # Matrix between input and hidden layer
     # initialize weights with standard distribution / number of inputs
     # Input -> hidden layer
     input_hidden_weights = np.random.randn(IMAGE_SIZE ** 2,
-                                           hidden_layer_size) / np.sqrt(
+                                           HIDDEN_LAYER_SIZE) / np.sqrt(
         IMAGE_SIZE ** 2)
-    bias_input_hidden = np.random.randn(1, hidden_layer_size)
+    bias_input_hidden = np.random.randn(1, HIDDEN_LAYER_SIZE)
 
     # Hidden layer -> output layer
-    hidden_output_weights = np.random.randn(hidden_layer_size,
+    hidden_output_weights = np.random.randn(HIDDEN_LAYER_SIZE,
                                             CLASSES) / np.sqrt(
-        hidden_layer_size)
+        HIDDEN_LAYER_SIZE)
     bias_output_hidden = np.random.randn(1, CLASSES)
 
     # Initialize helper variables
@@ -112,9 +106,11 @@ def main():
     step = 0
     # Start training
     for epoch in range(EPOCHS):
-        print("######### Starting epoch:", epoch)
+        print("######### Starting epoch: ", epoch, "#########")
+
         for image, label in zip(images, labels):
             # Reshape inputs so they fit the net architecture
+            image = image.T
             image.resize(1, IMAGE_SIZE ** 2)
             output_layer, hidden_activations = forward_pass(input=image,
                                                             input_hidden_weight=input_hidden_weights,
@@ -141,7 +137,8 @@ def main():
 
             # Print loss
             if step % 5000 == 0:
-                print('Step {}: Logarithmic loss is: {:.5f}'.format(step, loss))
+                print('Iteration {}: Cross entropy loss: {:.5f}'.format(step,
+                                                                        loss))
             # Train set evaluation
             step += 1
 
@@ -149,6 +146,7 @@ def main():
         correct_predictions = 0
         for image, label in zip(images_eval, labels_eval):
             # Reshape inputs so they fit the net architecture
+            image = image.T
             image.resize(1, IMAGE_SIZE ** 2)
 
             output_layer, hidden_activations = forward_pass(input=image,
@@ -161,7 +159,7 @@ def main():
                 correct_predictions += 1
 
         print("\nAccuracy on the test set: {:.3f}".format(
-            correct_predictions / no_examples_test))
+            correct_predictions / NO_EXAMPLES_TEST))
 
 
 if __name__ == "__main__":

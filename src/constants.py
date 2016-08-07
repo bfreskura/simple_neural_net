@@ -12,3 +12,9 @@ CLASSES = 10
 IMAGE_SIZE = 28
 
 EPOCHS = 20
+
+# Network architecture
+
+HIDDEN_LAYER_SIZE = 100
+NO_EXAMPLES_TRAIN = 60000  # Can be in range [0,60000]
+NO_EXAMPLES_TEST = 10000  # Can be in range [0,10000]
