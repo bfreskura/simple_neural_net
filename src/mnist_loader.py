@@ -1,5 +1,8 @@
 import numpy as np
+import urllib.request
 from constants import *
+import gzip
+import shutil
 
 
 def load(imgf, labelf, n):
@@ -34,10 +37,30 @@ def load(imgf, labelf, n):
         for j in range(IMAGE_SIZE ** 2):
             image.append(ord(f.read(1)))
 
-        # Concatinate label and image
+        # Concatenate label and image
         data = np.concatenate([np.array(image), label])
         images.append(data)
     return images
+
+
+def download_mnist_files():
+    files = {
+        TRAIN_OUTPUT: "http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz",
+        TRAIN_INPUT: "http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz",
+        EVAL_INPUT: "http://yann.lecun.com/exdb/mnist/t10k-images-idx3-ubyte.gz",
+        EVAL_OUTPUT: "http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz"}
+
+    for file_name, link in files.items():
+        if not os.path.exists(file_name):
+            print("Downloading:", link)
+            urllib.request.urlretrieve(link,
+                                       filename=file_name + ".gz")
+            print("Extracting...\n")
+            with gzip.open(file_name + ".gz", 'rb') as f_in:
+                with open(file_name, 'wb') as f_out:
+                    shutil.copyfileobj(f_in, f_out)
+            # Clear compressed files
+            os.remove(file_name + ".gz")
 
 
 def to_one_hot(label, no_classes):

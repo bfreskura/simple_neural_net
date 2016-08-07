@@ -114,6 +114,8 @@ def main():
     assert 0 <= NO_EXAMPLES_TEST <= 10000, "Must be in range [0, 10000]"
     assert 0 <= NO_EXAMPLES_TRAIN <= 60000, "Must be in range [0,60000]"
 
+    mnist_loader.download_mnist_files()
+
     # Load training data
     train_data = mnist_loader.load(TRAIN_INPUT, TRAIN_OUTPUT,
                                    NO_EXAMPLES_TRAIN)
@@ -141,6 +143,7 @@ def main():
     correct_predictions = 0
     step = 0
     # Start training
+    print("Training started")
     for epoch in range(EPOCHS):
         print("######### Starting epoch: ", epoch, "#########")
 

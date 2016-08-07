@@ -23,7 +23,4 @@ Epochs | Hidden Layers | Precision on the Test set [%] | Learning Rate | Minibat
 
 ## How to use
 
-Download the MNIST dataset from the link above. Extract every zip to the
-*src/resources/* folder.
-
 Run *src/simple_net.py*
