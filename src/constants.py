@@ -10,3 +10,5 @@ EVAL_OUTPUT = os.path.join(RSRC, "t10k-labels.idx1-ubyte")
 
 CLASSES = 10
 IMAGE_SIZE = 28
+
+EPOCHS = 20

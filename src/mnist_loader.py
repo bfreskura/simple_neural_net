@@ -4,7 +4,6 @@ from constants import *
 
 def load(imgf, labelf, n):
     """
-
     :param imgf: Images train
     :param labelf: Labels train
     :param n:
