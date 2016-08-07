@@ -90,7 +90,7 @@ ENV/
 
 
 # Data
-resources/*-ubyte
+src/resources/*-ubyte
 
 # Idea files
 *.idea/
