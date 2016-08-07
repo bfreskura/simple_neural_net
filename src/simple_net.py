@@ -58,9 +58,19 @@ def backprop(y, y_, hidden_output_activations, hidden_weights,
     return hidden_weights, bias_hidden, input_weights, bias_input
 
 
+def forward_pass(input, input_hidden_weight, bias_input, hidden_output_weight,
+                 bias_hidden):
+    # Feedforward
+    hidden_layer = np.dot(input, input_hidden_weight) + bias_input
+    hidden_activations = sigmoid(hidden_layer)
+    return softmax(
+        np.dot(hidden_activations,
+               hidden_output_weight) + bias_hidden), hidden_activations
+
+
 def main():
     hidden_layer_size = 100
-    no_examples_train = 30000
+    no_examples_train = 60000
     no_examples_test = 10000
 
     # Load training data
@@ -90,14 +100,13 @@ def main():
     for image, label in zip(images, labels):
         # Reshape inputs so they fit the net architecture
         image = np.transpose(image)
-        image.resize(1, 784)
+        image.resize(1, IMAGE_SIZE ** 2)
 
-        # Feedforward
-        hidden_layer = np.dot(image, input_hidden_weights) + bias_input_hidden
-        hidden_activations = sigmoid(hidden_layer)
-
-        output_layer = softmax(np.dot(hidden_activations,
-                                      hidden_output_weights) + bias_output_hidden)
+        output_layer, hidden_activations = forward_pass(input=image,
+                                                        input_hidden_weight=input_hidden_weights,
+                                                        bias_input=bias_input_hidden,
+                                                        hidden_output_weight=hidden_output_weights,
+                                                        bias_hidden=bias_output_hidden)
 
         loss = log_loss(true_output=label, net_output=output_layer)
 
@@ -117,32 +126,32 @@ def main():
             correct_predictions += 1
 
         # Print loss
-        if step % 300 == 0:
+        if step % 500 == 0:
             print('Step {}: Logarithmic loss is: {:.5f}'.format(step, loss))
+        # Train set evaluation
+        if step % 5000 == 0:
+            print("\nAccuracy on a training set: {:.3f}".format(
+                correct_predictions / no_examples_train))
         step += 1
 
-    print("\nAccuracy on a training set: {:.3f}".format(
-        correct_predictions / no_examples_train))
-
-    correct_predictions = 0
     # Evaluation on the test set
+    correct_predictions = 0
     for image, label in zip(images_eval, labels_eval):
         # Reshape inputs so they fit the net architecture
         image = np.transpose(image)
         image.resize(1, 784)
 
-        # Feedforward
-        hidden_layer = np.dot(image, input_hidden_weights) + bias_input_hidden
-        hidden_activations = sigmoid(hidden_layer)
-
-        output_layer = softmax(np.dot(hidden_activations,
-                                      hidden_output_weights) + bias_output_hidden)
+        output_layer, hidden_activations = forward_pass(input=image,
+                                                        input_hidden_weight=input_hidden_weights,
+                                                        bias_input=bias_input_hidden,
+                                                        hidden_output_weight=hidden_output_weights,
+                                                        bias_hidden=bias_output_hidden)
         # Measure correct predicitons
         if np.argmax(output_layer) == np.argmax(label):
             correct_predictions += 1
 
     print("\nAccuracy on the test set: {:.3f}".format(
-        correct_predictions / no_examples_train))
+        correct_predictions / no_examples_test))
 
 
 if __name__ == "__main__":
