@@ -14,7 +14,7 @@ class Batcher:
         """
         np.random.shuffle(self.data)
         for i in range(0, len(self.data), self.batch_size):
-            # Extract image data and label from the data array
+            # Extract one batch of images and labels from the data array
             batch_data = self.data[i:i + self.batch_size]
             data_reshaped = np.split(batch_data, [IMAGE_SIZE ** 2], axis=1)
 
