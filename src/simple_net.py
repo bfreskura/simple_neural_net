@@ -1,6 +1,7 @@
 import numpy as np
 from constants import *
 import mnist_loader
+import batcher
 
 
 def sigmoid(vector):
@@ -18,28 +19,32 @@ def softmax(vector):
     :param vector: Matrix or a vector
     :return:
     """
-    return np.exp(vector) / np.sum(np.exp(vector))
+    return np.exp(vector) / np.sum(np.exp(vector), axis=1, keepdims=True)
 
 
 def log_loss(true_output, net_output):
     """
-    Calculates logarithmic loss across all output classes
+    Calculates logarithmic loss across all output classes.
+
     https://en.wikipedia.org/wiki/Cross_entropy
     :param true_output: Real outputs
     :param net_output: Network outputs
-    :return:
+    :return: Batch loss mean
     """
-    return - np.sum(true_output * np.log(net_output)) / net_output.shape[0]
+    sum = - np.sum((np.multiply(true_output, np.log(net_output))) / (
+        net_output.shape[1]), axis=1)
+    return np.mean(sum)
 
 
 def backprop(y, y_, hidden_output_activations, hidden_weights,
              input_weights, bias_hidden, bias_input, input_x):
     # Derivative with respect to output (cross entropy + softmax)
     # https://math.stackexchange.com/questions/945871/derivative-of-softmax-loss-function#945918
-    dLdy_ = (y_ - y) / y.shape[0]
+
+    dLdy_ = (y_ - y) / y.shape[1]
 
     # Derivative of the error with respect to the hidden layer activations
-    dLdhiddenActiv = np.dot(np.transpose(dLdy_), (hidden_output_activations))
+    dLdhiddenActiv = np.dot(np.transpose(dLdy_), hidden_output_activations)
 
     delta_h = np.multiply(
         np.multiply(hidden_output_activations, (1 - hidden_output_activations)),
@@ -47,13 +52,16 @@ def backprop(y, y_, hidden_output_activations, hidden_weights,
 
     dLdWinput = np.dot(input_x.T, delta_h)
 
-    learning_rate = 0.001
     # Update weights
     hidden_weights = update_weights(hidden_weights, dLdhiddenActiv.T,
-                                    learning_rate)
-    bias_hidden = update_weights(bias_hidden, dLdy_, learning_rate)
-    input_weights = update_weights(input_weights, dLdWinput, learning_rate)
-    bias_input = update_weights(bias_input, delta_h, learning_rate)
+                                    LEARNING_RATE)
+    bias_hidden = update_weights(bias_hidden,
+                                 np.sum(dLdy_, axis=0, keepdims=True),
+                                 LEARNING_RATE)
+    input_weights = update_weights(input_weights, dLdWinput, LEARNING_RATE)
+    bias_input = update_weights(bias_input,
+                                np.sum(delta_h, axis=0, keepdims=True),
+                                LEARNING_RATE)
 
     return hidden_weights, bias_hidden, input_weights, bias_input
 
@@ -72,7 +80,15 @@ def update_weights(weight_matrix, gradient, learning_rate):
 
 def forward_pass(input, input_hidden_weight, bias_input, hidden_output_weight,
                  bias_hidden):
-    # Feedforward
+    """
+    Calculates the forward pass of the network
+    :param input:
+    :param input_hidden_weight:
+    :param bias_input:
+    :param hidden_output_weight:
+    :param bias_hidden:
+    :return: Softmax outputs for the batch
+    """
     hidden_layer = np.dot(input, input_hidden_weight) + bias_input
     hidden_activations = sigmoid(hidden_layer)
     return softmax(np.dot(hidden_activations,
@@ -80,12 +96,13 @@ def forward_pass(input, input_hidden_weight, bias_input, hidden_output_weight,
 
 
 def main():
-
     # Load training data
-    images, labels = mnist_loader.load(TRAIN_INPUT, TRAIN_OUTPUT,
-                                       NO_EXAMPLES_TRAIN)
-    images_eval, labels_eval = mnist_loader.load(EVAL_INPUT, EVAL_OUTPUT,
-                                                 NO_EXAMPLES_TEST)
+    train_data = mnist_loader.load(TRAIN_INPUT, TRAIN_OUTPUT,
+                                   NO_EXAMPLES_TRAIN)
+    eval_data = mnist_loader.load(EVAL_INPUT, EVAL_OUTPUT,
+                                  NO_EXAMPLES_TEST)
+    batcher_train = batcher.Batcher(train_data, BATCH_SIZE)
+    eval_batcher = batcher.Batcher(eval_data, 1)
 
     # Matrix between input and hidden layer
     # initialize weights with standard distribution / number of inputs
@@ -108,10 +125,8 @@ def main():
     for epoch in range(EPOCHS):
         print("######### Starting epoch: ", epoch, "#########")
 
-        for image, label in zip(images, labels):
+        for image, label in batcher_train.next_batch():
             # Reshape inputs so they fit the net architecture
-            image = image.T
-            image.resize(1, IMAGE_SIZE ** 2)
             output_layer, hidden_activations = forward_pass(input=image,
                                                             input_hidden_weight=input_hidden_weights,
                                                             bias_input=bias_input_hidden,
@@ -136,26 +151,24 @@ def main():
                 correct_predictions += 1
 
             # Print loss
-            if step % 5000 == 0:
-                print('Iteration {}: Cross entropy loss: {:.5f}'.format(step,
-                                                                        loss))
+            if step % 10000 == 0:
+                print('Iteration {}: Batch Cross entropy loss: {:.5f}'.format(
+                    step,
+                    loss))
             # Train set evaluation
-            step += 1
+            step += BATCH_SIZE
 
         # Evaluation on the test set
         correct_predictions = 0
-        for image, label in zip(images_eval, labels_eval):
+        for image_eval, label_eval in eval_batcher.next_batch():
             # Reshape inputs so they fit the net architecture
-            image = image.T
-            image.resize(1, IMAGE_SIZE ** 2)
-
-            output_layer, hidden_activations = forward_pass(input=image,
+            output_layer, hidden_activations = forward_pass(input=image_eval,
                                                             input_hidden_weight=input_hidden_weights,
                                                             bias_input=bias_input_hidden,
                                                             hidden_output_weight=hidden_output_weights,
                                                             bias_hidden=bias_output_hidden)
             # Measure correct predicitons
-            if np.argmax(output_layer) == np.argmax(label):
+            if np.argmax(output_layer) == np.argmax(label_eval):
                 correct_predictions += 1
 
         print("\nAccuracy on the test set: {:.3f}".format(

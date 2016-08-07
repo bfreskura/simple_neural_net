@@ -15,15 +15,17 @@ def load(imgf, labelf, n):
     f.read(16)
     l.read(8)
     images = []
-    labels = []
 
     for i in range(n):
-        labels.append(to_one_hot(ord(l.read(1)), CLASSES))
         image = []
+        label = to_one_hot(ord(l.read(1)), CLASSES)
         for j in range(IMAGE_SIZE ** 2):
             image.append(ord(f.read(1)))
-        images.append(image)
-    return np.array(images, dtype=np.uint8), np.array(labels, dtype=np.int32)
+
+        # Concatinate label and image
+        data = np.concatenate([np.array(image), label])
+        images.append(data)
+    return images
 
 
 def to_one_hot(label, no_classes):
