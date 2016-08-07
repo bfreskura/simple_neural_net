@@ -91,3 +91,6 @@ ENV/
 
 # Data
 resources/
+
+# Idea files
+*.idea/

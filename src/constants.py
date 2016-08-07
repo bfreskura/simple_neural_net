@@ -8,7 +8,9 @@ TRAIN_OUTPUT = os.path.join(RSRC, "train-labels.idx1-ubyte")
 EVAL_INPUT = os.path.join(RSRC, "t10k-images.idx3-ubyte")
 EVAL_OUTPUT = os.path.join(RSRC, "t10k-labels.idx1-ubyte")
 
+# Number of classes (digits)
 CLASSES = 10
+# Image width and height (Images are 28x28)
 IMAGE_SIZE = 28
 
 EPOCHS = 100
@@ -18,5 +20,5 @@ LEARNING_RATE = 0.0009
 # Network architecture
 
 HIDDEN_LAYER_SIZE = 100
-NO_EXAMPLES_TRAIN = 60000  # Can be in range [0,60000]
-NO_EXAMPLES_TEST = 10000  # Can be in range [0,10000]
+NO_EXAMPLES_TRAIN = 60000  # MUST be in range [0,60000]
+NO_EXAMPLES_TEST = 10000  # MUST be in range [0,10000]
