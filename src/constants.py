@@ -14,7 +14,7 @@ CLASSES = 10
 IMAGE_SIZE = 28
 
 EPOCHS = 100
-BATCH_SIZE = 300  # Must be an even number
+BATCH_SIZE = 2  # Must be an even number
 LEARNING_RATE = 0.0009
 
 # Network architecture

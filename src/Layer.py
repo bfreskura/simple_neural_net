@@ -5,7 +5,7 @@ class Layer:
     def forward(self, input):
         raise NotImplementedError
 
-    def backprop(self):
+    def backprop(self, layer_next):
         raise NotImplementedError
 
     def _activation(self, vector):
@@ -19,11 +19,12 @@ class SigmoidLayer(Layer):
         self.bias = np.random.randn(1, layer_next_dim)
 
     def forward(self, input):
+        self.input = input
         linear_comb = np.dot(input, self.weights) + self.bias
         return self._activation(linear_comb)
 
-    def backprop(self):
-        pass
+    def backprop(self, layer_next):
+        return np.dot(self.input.T, layer_next)
 
     def _activation(self, vector):
         """
@@ -41,11 +42,19 @@ class SoftmaxLayer(Layer):
         self.bias = np.random.randn(1, layer_next_dim)
 
     def forward(self, input):
+        self.prev_output = input
         linear_comb = np.dot(input, self.weights) + self.bias
-        return self._activation(linear_comb)
+        self.output = self._activation(linear_comb)
+        return self.output
 
-    def backprop(self):
-        pass
+    def backprop(self, layer_next):
+        dLdy_ = (self.output - layer_next) / layer_next.shape[1]
+        # Derivative of the error with respect to the hidden layer activations
+        dLdhiddenActiv = np.dot(np.transpose(dLdy_), self.prev_output)
+        delta_h = np.multiply(
+            np.multiply(self.prev_output, (1 - self.prev_output)),
+            (np.dot(dLdy_, self.weights.T)))
+        return delta_h
 
     def _activation(self, vector):
         """

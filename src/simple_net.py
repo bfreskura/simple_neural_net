@@ -137,6 +137,13 @@ def forward_pass2(first_layer_input, layer_list):
     return output_prev
 
 
+def backprop2(sigmoid, softmax, output):
+    delta_h = softmax.backprop(output)
+    dLdWinput = sigmoid.backprop(delta_h)
+
+    return dLdWinput, delta_h
+
+
 def main():
     # Assert constants
     assert BATCH_SIZE % 2 == 0, "Must be devisable by 2"
@@ -177,16 +184,10 @@ def main():
             # Reshape inputs so they fit the net architecture
             network_output = forward_pass2(first_layer_input=image,
                                            layer_list=layers)
-            print(np.sum(network_output))
 
-            output_layer, hidden_activations = forward_pass(input=image,
-                                                            # input_hidden_weight=input_hidden_weights,
-                                                            # bias_input=bias_input_hidden,
-                                                            # hidden_output_weight=hidden_output_weights,
-                                                            # bias_hidden=bias_output_hidden)
-            
+            loss = log_loss(true_output=label, net_output=network_output)
 
-            # loss = log_loss(true_output=label, net_output=output_layer)
+            print(backprop2(sigmoid_layer, softmax_layer, label))
 
             #     # Do the backprop
             #     hidden_output_weights, bias_output_hidden, input_hidden_weights, bias_input_hidden = backprop(
