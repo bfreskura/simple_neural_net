@@ -24,7 +24,8 @@ class SigmoidLayer(Layer):
         return self._activation(linear_comb)
 
     def backprop(self, layer_next):
-        return np.dot(self.input.T, layer_next)
+        self.dLdWinput = np.dot(self.input.T, layer_next)
+        return self.dLdWinput
 
     def _activation(self, vector):
         """
@@ -33,6 +34,12 @@ class SigmoidLayer(Layer):
         :return: Matrix/Vector of sigmoid activations
         """
         return 1 / (1 + np.exp(-vector))
+
+    def update_weights(self, optimizer, prev_activ):
+        self.weights = optimizer.update_weights(self.weights, self.dLdWinput)
+        self.bias = optimizer.update_weights(self.bias,
+                                             np.sum(prev_activ, axis=0,
+                                                    keepdims=True))
 
 
 class SoftmaxLayer(Layer):
@@ -48,12 +55,13 @@ class SoftmaxLayer(Layer):
         return self.output
 
     def backprop(self, layer_next):
-        dLdy_ = (self.output - layer_next) / layer_next.shape[1]
+        self.dLdy_ = (self.output - layer_next) / layer_next.shape[1]
         # Derivative of the error with respect to the hidden layer activations
-        dLdhiddenActiv = np.dot(np.transpose(dLdy_), self.prev_output)
+        self.dLdhiddenActiv = np.dot(np.transpose(self.dLdy_),
+                                     self.prev_output)
         delta_h = np.multiply(
             np.multiply(self.prev_output, (1 - self.prev_output)),
-            (np.dot(dLdy_, self.weights.T)))
+            (np.dot(self.dLdy_, self.weights.T)))
         return delta_h
 
     def _activation(self, vector):
@@ -63,4 +71,12 @@ class SoftmaxLayer(Layer):
         :param vector: Matrix or a vector
         :return: Softmaxed Matrix/vector
         """
-        return np.exp(vector) / np.sum(np.exp(vector), axis=1, keepdims=True)
+        return np.exp(vector) / np.sum(np.exp(vector), axis=1,
+                                       keepdims=True)
+
+    def update_weights(self, optimizer):
+        self.weights = optimizer.update_weights(self.weights,
+                                                self.dLdhiddenActiv.T)
+        self.bias = optimizer.update_weights(self.bias,
+                                             np.sum(self.dLdy_, axis=0,
+                                                    keepdims=True))

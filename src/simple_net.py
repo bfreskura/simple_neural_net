@@ -1,39 +1,8 @@
-import numpy as np
-from constants import *
-import mnist_loader
 import batcher
+import mnist_loader
 from Layer import *
-
-
-class Optimizer:
-    def update_weights(self, weight_matrix, gradient):
-        raise NotImplementedError
-
-
-class GradientDescent(Optimizer):
-    def __init__(self, learning_rate=0.001):
-        self.learning_rate = learning_rate
-
-    def update_weights(self, weight_matrix, gradient):
-        weight_matrix -= self.learning_rate * gradient
-        return weight_matrix
-
-
-class RMSProp(Optimizer):
-    def __init__(self, gamma=0.9, alpha=0.001, eps=0.00000001):
-        self.r = 0
-        self.gamma = gamma
-        self.velocity = 0
-        self.alpha = alpha
-        self.eps = eps
-
-    def update_weights(self, weight_matrix, gradient):
-        self.r = self.gamma * np.square(gradient) + (1 - self.gamma) * self.r
-        self.velocity = np.multiply((self.alpha / (np.sqrt(self.r) + self.eps)),
-                                    gradient)
-        weight_matrix -= self.velocity
-
-        return weight_matrix
+from constants import *
+from optimizers import *
 
 
 def sigmoid(vector):
@@ -137,11 +106,12 @@ def forward_pass2(first_layer_input, layer_list):
     return output_prev
 
 
-def backprop2(sigmoid, softmax, output):
+def backprop2(sigmoid, softmax, output, optimizer):
     delta_h = softmax.backprop(output)
     dLdWinput = sigmoid.backprop(delta_h)
 
-    return dLdWinput, delta_h
+    sigmoid.update_weights(optimizer, delta_h)
+    softmax.update_weights(optimizer)
 
 
 def main():
@@ -186,48 +156,33 @@ def main():
                                            layer_list=layers)
 
             loss = log_loss(true_output=label, net_output=network_output)
+            backprop2(sigmoid_layer, softmax_layer, label, gradient_optimizer)
+            # Measure correct predicitons
 
-            print(backprop2(sigmoid_layer, softmax_layer, label))
+            if np.argmax(network_output) == np.argmax(label):
+                correct_predictions += 1
 
-            #     # Do the backprop
-            #     hidden_output_weights, bias_output_hidden, input_hidden_weights, bias_input_hidden = backprop(
-            #         y=label,
-            #         y_=output_layer,
-            #         hidden_output_activations=hidden_activations,
-            #         hidden_weights=hidden_output_weights,
-            #         input_weights=input_hidden_weights,
-            #         bias_hidden=bias_output_hidden,
-            #         bias_input=bias_input_hidden,
-            #         input_x=image,
-            #         optimizer=gradient_optimizer)
-            #
-            #     # Measure correct predicitons
-            #     if np.argmax(output_layer) == np.argmax(label):
-            #         correct_predictions += 1
-            #
-            #     # Print loss
-            #     if step % 10000 == 0:
-            #         print('Iteration {}: Batch Cross entropy loss: {:.5f}'.format(
-            #             step,
-            #             loss))
-            #     # Train set evaluation
-            #     step += BATCH_SIZE
-            #
-            # # Evaluation on the test set
-            # correct_predictions = 0
-            # for image_eval, label_eval in eval_batcher.next_batch():
-            #     # Reshape inputs so they fit the net architecture
-            #     output_layer, hidden_activations = forward_pass(input=image_eval,
-            #                                                     input_hidden_weight=input_hidden_weights,
-            #                                                     bias_input=bias_input_hidden,
-            #                                                     hidden_output_weight=hidden_output_weights,
-            #                                                     bias_hidden=bias_output_hidden)
-            #     # Count correct predictions
-            #     if np.argmax(output_layer) == np.argmax(label_eval):
-            #         correct_predictions += 1
-            #
-            # print("\nAccuracy on the test set: {:.3f}".format(
-            #     correct_predictions / NO_EXAMPLES_TEST))
+            # Print loss
+            if step % 10000 == 0:
+                print('Iteration {}: Batch Cross entropy loss: {:.5f}'.format(
+                    step,
+                    loss))
+            # Train set evaluation
+            step += BATCH_SIZE
+
+        # # Evaluation on the test set
+        correct_predictions = 0
+        # TODO create batching
+        for image_eval, label_eval in eval_batcher.next_batch():
+            # Reshape inputs so they fit the net architecture
+            network_output = forward_pass2(first_layer_input=image_eval,
+                                           layer_list=layers)
+            # Count correct predictions
+            if np.argmax(network_output) == np.argmax(label_eval):
+                correct_predictions += 1
+
+        print("\nAccuracy on the test set: {:.3f}".format(
+            correct_predictions / NO_EXAMPLES_TEST))
 
 
 if __name__ == "__main__":

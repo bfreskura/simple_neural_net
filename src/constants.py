@@ -14,11 +14,11 @@ CLASSES = 10
 IMAGE_SIZE = 28
 
 EPOCHS = 100
-BATCH_SIZE = 2  # Must be an even number
+BATCH_SIZE = 200  # Must be an even number
 LEARNING_RATE = 0.0009
 
 # Network architecture
 
 HIDDEN_LAYER_SIZE = 100
-NO_EXAMPLES_TRAIN = 100  # MUST be in range [0,60000]
-NO_EXAMPLES_TEST = 100  # MUST be in range [0,10000]
+NO_EXAMPLES_TRAIN = 60000  # MUST be in range [0,60000]
+NO_EXAMPLES_TEST = 10000  # MUST be in range [0,10000]
