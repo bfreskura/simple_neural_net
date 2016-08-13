@@ -53,8 +53,7 @@ def forward_pass(first_layer_input, layer_list):
 
 def backprop(sigmoid, softmax, output):
     delta_h = softmax.backprop(output)
-    dLdWinput = sigmoid.backprop(delta_h)
-
+    sigmoid.backprop(delta_h)
     sigmoid.update_weights(delta_h)
     softmax.update_weights()
 
@@ -75,14 +74,14 @@ def main():
 
     # Create batchers for data batching
     batcher_train = batcher.Batcher(train_data, BATCH_SIZE)
-    eval_batcher = batcher.Batcher(eval_data, 1)
+    eval_batcher = batcher.Batcher(eval_data, BATCH_SIZE)
 
     # Create optimizers for each layer (necessary because every weight
     # optimizer must have unique optimizer parameters, e.g RMSProp)
-    gradient_optimizer_w1 = RMSProp()
-    gradient_optimizer_b1 = RMSProp()
-    gradient_optimizer_w2 = RMSProp()
-    gradient_optimizer_b2 = RMSProp()
+    gradient_optimizer_w1 = GradientDescent()
+    gradient_optimizer_b1 = GradientDescent()
+    gradient_optimizer_w2 = GradientDescent()
+    gradient_optimizer_b2 = GradientDescent()
 
     # Create network layers
     sigmoid_layer = SigmoidLayer(IMAGE_SIZE ** 2, HIDDEN_LAYER_SIZE,
@@ -124,14 +123,14 @@ def main():
 
         # # Evaluation on the test set
         correct_predictions = 0
-        # TODO create batching
         for image_eval, label_eval in eval_batcher.next_batch():
             # Reshape inputs so they fit the net architecture
             network_output = forward_pass(first_layer_input=image_eval,
                                            layer_list=layers)
             # Count correct predictions
-            if np.argmax(network_output) == np.argmax(label_eval):
-                correct_predictions += 1
+            expr = np.argmax(network_output, axis=1) == np.argmax(label_eval,
+                                                                 axis=1)
+            correct_predictions += np.sum(expr)
 
         print("\nAccuracy on the test set: {:.3f}".format(
             correct_predictions / NO_EXAMPLES_TEST))
