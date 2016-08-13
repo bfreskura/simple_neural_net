@@ -3,7 +3,13 @@ import numpy as np
 
 class Optimizer:
     def update_weights(self, weight_matrix, gradient):
+        """
+        Updates weights using the implemented optimizer
+        :param: weight_matrix: Weights Matrix
+        :param: gradient: Gradients matrix
+        """
         raise NotImplementedError
+
 
 
 class GradientDescent(Optimizer):
@@ -16,8 +22,13 @@ class GradientDescent(Optimizer):
 
 
 class RMSProp(Optimizer):
-    def __init__(self, gamma=0.9, alpha=0.001, eps=0.00000001):
-        self.r = 0
+    """
+    RMSProp optimizer WITHOUT momentum
+    """
+    def __init__(self, learning_rate = 0.05,
+                 gamma=0.9, alpha=0.01, eps=0.00000001):
+        self.lr = learning_rate
+        self.r = 1
         self.gamma = gamma
         self.velocity = 0
         self.alpha = alpha
@@ -27,6 +38,6 @@ class RMSProp(Optimizer):
         self.r = self.gamma * np.square(gradient) + (1 - self.gamma) * self.r
         self.velocity = np.multiply((self.alpha / (np.sqrt(self.r) + self.eps)),
                                     gradient)
-        weight_matrix -= self.velocity
+        weight_matrix -= self.lr * self.velocity
 
         return weight_matrix

@@ -13,10 +13,12 @@ class Layer:
 
 
 class SigmoidLayer(Layer):
-    def __init__(self, input_dim, layer_next_dim):
+    def __init__(self, input_dim, layer_next_dim, weights_opt, bias_opt):
         self.weights = np.random.randn(input_dim, layer_next_dim) * \
                        1 / np.sqrt(input_dim)
         self.bias = np.random.randn(1, layer_next_dim)
+        self.weights_opt = weights_opt
+        self.bias_opt = bias_opt
 
     def forward(self, input):
         self.input = input
@@ -35,18 +37,20 @@ class SigmoidLayer(Layer):
         """
         return 1 / (1 + np.exp(-vector))
 
-    def update_weights(self, optimizer, prev_activ):
-        self.weights = optimizer.update_weights(self.weights, self.dLdWinput)
-        self.bias = optimizer.update_weights(self.bias,
+    def update_weights(self, prev_activ):
+        self.weights = self.weights_opt.update_weights(self.weights, self.dLdWinput)
+        self.bias = self.bias_opt.update_weights(self.bias,
                                              np.sum(prev_activ, axis=0,
                                                     keepdims=True))
 
 
 class SoftmaxLayer(Layer):
-    def __init__(self, input_dim, layer_next_dim):
+    def __init__(self, input_dim, layer_next_dim, weights_opt, bias_opt):
         self.weights = np.random.randn(input_dim, layer_next_dim) * \
                        1 / np.sqrt(input_dim)
         self.bias = np.random.randn(1, layer_next_dim)
+        self.weights_opt = weights_opt
+        self.bias_opt = bias_opt
 
     def forward(self, input):
         self.prev_output = input
@@ -74,9 +78,9 @@ class SoftmaxLayer(Layer):
         return np.exp(vector) / np.sum(np.exp(vector), axis=1,
                                        keepdims=True)
 
-    def update_weights(self, optimizer):
-        self.weights = optimizer.update_weights(self.weights,
+    def update_weights(self):
+        self.weights = self.weights_opt.update_weights(self.weights,
                                                 self.dLdhiddenActiv.T)
-        self.bias = optimizer.update_weights(self.bias,
+        self.bias = self.bias_opt.update_weights(self.bias,
                                              np.sum(self.dLdy_, axis=0,
                                                     keepdims=True))
